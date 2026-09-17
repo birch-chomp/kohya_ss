@@ -1179,7 +1179,11 @@ def run_cmd_advanced_training(run_cmd: list = [], **kwargs):
     if "additional_parameters" in kwargs and kwargs["additional_parameters"] != "":
         additional_parameters = kwargs["additional_parameters"].replace('"', "")
         for arg in additional_parameters.split():
-            run_cmd.append(shlex.quote(arg))
+            # Don't quote on windows
+            if os.name == 'nt':
+                run_cmd.append(arg)
+            else:
+                run_cmd.append(shlex.quote(arg))
 
     if "max_data_loader_n_workers" in kwargs:
         max_data_loader_n_workers = kwargs.get("max_data_loader_n_workers")
