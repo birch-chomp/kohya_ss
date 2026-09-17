@@ -275,17 +275,25 @@ class SourceModel:
                                 min_width=60,
                                 interactive=True,
                             )
+                            self.anima_checkbox = gr.Checkbox(
+                                label="Anima",
+                                value=False,
+                                visible=False,
+                                min_width=60,
+                                interactive=True,
+                            )
 
-                            def toggle_checkboxes(v2, v_parameterization, sdxl_checkbox, sd3_checkbox, flux1_checkbox):
+                            def toggle_checkboxes(v2, v_parameterization, sdxl_checkbox, sd3_checkbox, flux1_checkbox, anima_checkbox):
                                 # Check if all checkboxes are unchecked
-                                if not v2 and not sdxl_checkbox and not sd3_checkbox and not flux1_checkbox:
+                                if not v2 and not sdxl_checkbox and not sd3_checkbox and not flux1_checkbox and not anima_checkbox:
                                     # If all unchecked, return new interactive checkboxes
                                     return (
                                         gr.Checkbox(interactive=True),  # v2 checkbox
                                         gr.Checkbox(interactive=False, value=False),  # v_parameterization checkbox
                                         gr.Checkbox(interactive=True),  # sdxl_checkbox
                                         gr.Checkbox(interactive=True),  # sd3_checkbox
-                                        gr.Checkbox(interactive=True),  # sd3_checkbox
+                                        gr.Checkbox(interactive=True),  # flux1_checkbox
+                                        gr.Checkbox(interactive=True),  # anima_checkbox
                                     )
                                 else:
                                     # If any checkbox is checked, return checkboxes with current interactive state
@@ -295,36 +303,43 @@ class SourceModel:
                                         gr.Checkbox(interactive=sdxl_checkbox),  # sdxl_checkbox
                                         gr.Checkbox(interactive=sd3_checkbox),  # sd3_checkbox
                                         gr.Checkbox(interactive=flux1_checkbox),  # flux1_checkbox
+                                        gr.Checkbox(interactive=anima_checkbox),  # anima_checkbox
                                     )
 
                             self.v2.change(
                                 fn=toggle_checkboxes,
-                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
-                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
                                 show_progress=False,
                             )
                             self.v_parameterization.change(
                                 fn=toggle_checkboxes,
-                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
-                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
                                 show_progress=False,
                             )
                             self.sdxl_checkbox.change(
                                 fn=toggle_checkboxes,
-                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
-                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
                                 show_progress=False,
                             )
                             self.sd3_checkbox.change(
                                 fn=toggle_checkboxes,
-                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
-                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
                                 show_progress=False,
                             )
                             self.flux1_checkbox.change(
                                 fn=toggle_checkboxes,
-                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
-                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox],
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                show_progress=False,
+                            )
+                            self.anima_checkbox.change(
+                                fn=toggle_checkboxes,
+                                inputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
+                                outputs=[self.v2, self.v_parameterization, self.sdxl_checkbox, self.sd3_checkbox, self.flux1_checkbox, self.anima_checkbox],
                                 show_progress=False,
                             )
                     with gr.Column():
@@ -364,6 +379,7 @@ class SourceModel:
                         self.sdxl_checkbox,
                         self.sd3_checkbox,
                         self.flux1_checkbox,
+                        self.anima_checkbox,
                     ],
                     show_progress=False,
                 )

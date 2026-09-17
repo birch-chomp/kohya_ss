@@ -12,6 +12,7 @@ class ModelType(enum.Enum):
     SDXL = 3
     SD3 = 4
     FLUX1 = 5
+    ANIMA = 6
 
 
 class SDModelType:
@@ -44,6 +45,8 @@ class SDModelType:
                 self.model_type = ModelType.SD2
             elif hasKeyPrefix("model."):
                 self.model_type = ModelType.SD1
+            elif hasKeyPrefix("net."):
+                self.model_type = ModelType.ANIMA
         except:
             pass
         
@@ -63,3 +66,6 @@ class SDModelType:
 
     def Is_FLUX1(self):
         return self.model_type == ModelType.FLUX1
+    
+    def Is_ANIMA(self):
+        return self.model_type == ModelType.ANIMA

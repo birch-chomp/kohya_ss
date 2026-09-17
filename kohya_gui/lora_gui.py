@@ -32,6 +32,7 @@ from .class_source_model import SourceModel
 from .class_basic_training import BasicTraining
 from .class_advanced_training import AdvancedTraining
 from .class_sd3 import sd3Training
+from .class_anima import animaTraining
 from .class_sdxl_parameters import SDXLParameters
 from .class_folders import Folders
 from .class_command_executor import CommandExecutor
@@ -319,6 +320,26 @@ def save_configuration(
     sd3_text_encoder_batch_size,
     weighting_scheme,
     sd3_checkbox,
+    # Anima parameters
+    anima_qwen3,
+    anima_llm_adapter_path,
+    anima_t5_tokenizer_path,
+    anima_self_attn_lr,
+    anima_cross_attn_lr,
+    anima_mlp_lr,
+    anima_llm_adapter_lr,
+    anima_timestep_sampling,
+    anima_discrete_flow_shift,
+    anima_sigmoid_scale,
+    anima_attn_mode,
+    anima_split_attn,
+    anima_cpu_offload_checkpointing,
+    anima_unsloth_offload_checkpointing,
+    anima_qwen3_max_token_length,
+    anima_t5_max_token_length,
+    anima_cache_text_encoder_outputs,
+    anima_cache_text_encoder_outputs_to_disk,
+    anima_checkbox,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -605,6 +626,26 @@ def open_configuration(
     sd3_text_encoder_batch_size,
     weighting_scheme,
     sd3_checkbox,
+    # Anima parameters
+    anima_qwen3,
+    anima_llm_adapter_path,
+    anima_t5_tokenizer_path,
+    anima_self_attn_lr,
+    anima_cross_attn_lr,
+    anima_mlp_lr,
+    anima_llm_adapter_lr,
+    anima_timestep_sampling,
+    anima_discrete_flow_shift,
+    anima_sigmoid_scale,
+    anima_attn_mode,
+    anima_split_attn,
+    anima_cpu_offload_checkpointing,
+    anima_unsloth_offload_checkpointing,
+    anima_qwen3_max_token_length,
+    anima_t5_max_token_length,
+    anima_cache_text_encoder_outputs,
+    anima_cache_text_encoder_outputs_to_disk,
+    anima_checkbox,
     ##
     training_preset,
 ):
@@ -982,6 +1023,26 @@ def train_model(
     sd3_text_encoder_batch_size,
     weighting_scheme,
     sd3_checkbox,
+    # Anima parameters
+    anima_qwen3,
+    anima_llm_adapter_path,
+    anima_t5_tokenizer_path,
+    anima_self_attn_lr,
+    anima_cross_attn_lr,
+    anima_mlp_lr,
+    anima_llm_adapter_lr,
+    anima_timestep_sampling,
+    anima_discrete_flow_shift,
+    anima_sigmoid_scale,
+    anima_attn_mode,
+    anima_split_attn,
+    anima_cpu_offload_checkpointing,
+    anima_unsloth_offload_checkpointing,
+    anima_qwen3_max_token_length,
+    anima_t5_max_token_length,
+    anima_cache_text_encoder_outputs,
+    anima_cache_text_encoder_outputs_to_disk,
+    anima_checkbox,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -1276,6 +1337,8 @@ def train_model(
         run_cmd.append(rf"{scriptdir}/sd-scripts/flux_train_network.py")
     elif sd3_checkbox:
         run_cmd.append(rf"{scriptdir}/sd-scripts/sd3_train_network.py")
+    elif anima_checkbox:
+        run_cmd.append(rf"{scriptdir}/sd-scripts/anima_train_network.py")
     else:
         run_cmd.append(rf"{scriptdir}/sd-scripts/train_network.py")
 
@@ -1399,7 +1462,13 @@ def train_model(
             "rank_dropout",
             "module_dropout",
         ]
-        network_module = "networks.lora_sd3" if sd3_checkbox else "networks.lora"
+        if sd3_checkbox:
+            network_module = "networks.lora_sd3"
+        elif anima_checkbox:
+            network_module = "networks.lora_anima"
+        else:
+            network_module = "networks.lora"
+            
         kohya_lora_vars = {
             key: value
             for key, value in vars().items()
@@ -1413,6 +1482,15 @@ def train_model(
         for key, value in kohya_lora_vars.items():
             if value:
                 network_args += f" {key}={value}"
+
+        if anima_checkbox:
+            self_attn_lr = anima_self_attn_lr if anima_self_attn_lr is not None else learning_rate
+            cross_attn_lr = anima_cross_attn_lr if anima_cross_attn_lr is not None else learning_rate
+            mlp_lr = anima_mlp_lr if anima_mlp_lr is not None else learning_rate
+            llm_adapter_lr = anima_llm_adapter_lr if anima_llm_adapter_lr is not None else learning_rate
+            if llm_adapter_lr != 0:
+                network_args += " train_llm_adapter=True"
+            network_args += f" network_reg_lrs=.*self_attn.*={self_attn_lr},.*cross_attn.*={cross_attn_lr},.*mlp.*={mlp_lr},.*llm_adapter.*={llm_adapter_lr}"
 
     if LoRA_type in ["LoRA-FA"]:
         kohya_lora_var_list = [
@@ -1551,6 +1629,7 @@ def train_model(
             if (sdxl and sdxl_cache_text_encoder_outputs)
             or (flux1_checkbox and flux1_cache_text_encoder_outputs)
             or (sd3_checkbox and sd3_cache_text_encoder_outputs)
+            or (anima_checkbox and anima_cache_text_encoder_outputs)
             else None
         ),
         "cache_text_encoder_outputs_to_disk": (
@@ -1559,6 +1638,8 @@ def train_model(
             and flux1_cache_text_encoder_outputs_to_disk
             or sd3_checkbox
             and sd3_cache_text_encoder_outputs_to_disk
+            or anima_checkbox
+            and anima_cache_text_encoder_outputs_to_disk
             else None
         ),
         "caption_dropout_every_n_epochs": int(caption_dropout_every_n_epochs),
@@ -1756,9 +1837,17 @@ def train_model(
         "ae": ae if flux1_checkbox else None,
         # "clip_l": see previous assignment above for code
         "t5xxl": t5xxl_value,
-        "discrete_flow_shift": float(discrete_flow_shift) if flux1_checkbox else None,
+        "discrete_flow_shift": (
+            float(discrete_flow_shift) if flux1_checkbox
+            else float(anima_discrete_flow_shift) if anima_checkbox
+            else None
+        ),
         "model_prediction_type": model_prediction_type if flux1_checkbox else None,
-        "timestep_sampling": timestep_sampling if flux1_checkbox else None,
+        "timestep_sampling": (
+            timestep_sampling if flux1_checkbox
+            else anima_timestep_sampling if anima_checkbox
+            else None
+        ),
         "split_mode": split_mode if flux1_checkbox else None,
         "t5xxl_max_token_length": (
             int(t5xxl_max_token_length) if flux1_checkbox else None
@@ -1767,11 +1856,30 @@ def train_model(
         "mem_eff_save": mem_eff_save if flux1_checkbox else None,
         "apply_t5_attn_mask": apply_t5_attn_mask if flux1_checkbox else None,
         "cpu_offload_checkpointing": (
-            cpu_offload_checkpointing if flux1_checkbox else None
+            cpu_offload_checkpointing if flux1_checkbox
+            else anima_cpu_offload_checkpointing if anima_checkbox
+            else None
         ),
-        "blocks_to_swap": blocks_to_swap if flux1_checkbox or sd3_checkbox else None,
+        "blocks_to_swap": blocks_to_swap if flux1_checkbox or sd3_checkbox or anima_checkbox else None,
         "single_blocks_to_swap": single_blocks_to_swap if flux1_checkbox else None,
         "double_blocks_to_swap": double_blocks_to_swap if flux1_checkbox else None,
+        "qwen3": anima_qwen3 if anima_checkbox else None,
+        "llm_adapter_path": anima_llm_adapter_path if anima_checkbox else None,
+        "t5_tokenizer_path": anima_t5_tokenizer_path if anima_checkbox else None,
+        "self_attn_lr": anima_self_attn_lr if anima_checkbox else None,
+        "cross_attn_lr": anima_cross_attn_lr if anima_checkbox else None,
+        "mlp_lr": anima_mlp_lr if anima_checkbox else None,
+        "llm_adapter_lr": anima_llm_adapter_lr if anima_checkbox else None,
+        "sigmoid_scale": anima_sigmoid_scale if anima_checkbox else None,
+        "attn_mode": anima_attn_mode if anima_checkbox else None,
+        "split_attn": anima_split_attn if anima_checkbox else None,
+        "unsloth_offload_checkpointing": anima_unsloth_offload_checkpointing if anima_checkbox else None,
+        "qwen3_max_token_length": (
+            int(anima_qwen3_max_token_length) if anima_checkbox else None
+        ),
+        "t5_max_token_length": (
+            int(anima_t5_max_token_length) if anima_checkbox else None
+        ),
     }
 
     # Given dictionary `config_toml_data`
@@ -2690,6 +2798,11 @@ def lora_tab(
                 headless=headless, config=config, sd3_checkbox=source_model.sd3_checkbox
             )
 
+            # Add Anima Parameters
+            anima_training = animaTraining(
+                headless=headless, config=config, anima_checkbox=source_model.anima_checkbox
+            )
+
             with gr.Accordion(
                 "Advanced", open=False, elem_classes="advanced_background"
             ):
@@ -3040,6 +3153,26 @@ def lora_tab(
             sd3_training.sd3_text_encoder_batch_size,
             sd3_training.weighting_scheme,
             source_model.sd3_checkbox,
+            # Anima Parameters
+            anima_training.qwen3,
+            anima_training.llm_adapter_path,
+            anima_training.t5_tokenizer_path,
+            anima_training.self_attn_lr,
+            anima_training.cross_attn_lr,
+            anima_training.mlp_lr,
+            anima_training.llm_adapter_lr,
+            anima_training.timestep_sampling,
+            anima_training.discrete_flow_shift,
+            anima_training.sigmoid_scale,
+            anima_training.attn_mode,
+            anima_training.split_attn,
+            anima_training.cpu_offload_checkpointing,
+            anima_training.unsloth_offload_checkpointing,
+            anima_training.qwen3_max_token_length,
+            anima_training.t5_max_token_length,
+            anima_training.anima_cache_text_encoder_outputs,
+            anima_training.anima_cache_text_encoder_outputs_to_disk,
+            source_model.anima_checkbox,
         ]
 
         configuration.button_open_config.click(
