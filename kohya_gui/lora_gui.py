@@ -1236,6 +1236,17 @@ def train_model(
     log.info(f"stop_text_encoder_training = {stop_text_encoder_training}")
     log.info(f"lr_warmup_steps = {lr_warmup_steps}")
 
+    # Calculate scheduler args for RexAnnealingWarmRestarts
+    if (lr_scheduler_type is not None and "rexannealingwarmrestarts" in lr_scheduler_type.lower()):
+        num_training_steps = max_train_steps * num_processes
+        num_cycles = lr_scheduler_num_cycles or 1
+        lr_scheduler_args = lr_scheduler_args or ""
+
+        first_cycle_max_steps = num_training_steps // num_cycles
+        warmup_steps = (int(lr_warmup_steps * first_cycle_max_steps) if isinstance(lr_warmup_steps, float) else lr_warmup_steps) or 0
+        lr_scheduler_args += f" first_cycle_max_steps={first_cycle_max_steps} warmup_steps={warmup_steps}"
+        lr_warmup_steps = 0
+
     accelerate_path = get_executable_path("accelerate")
     if accelerate_path == "":
         log.error("accelerate not found")

@@ -183,6 +183,7 @@ class BasicTraining:
                 choices=[
                     "",
                     "CosineAnnealingLR",
+                    "custom_scheduler.RexAnnealingWarmRestarts.RexAnnealingWarmRestarts",
                 ],
                 value=self.config.get("basic.lr_scheduler_type", ""),
                 allow_custom_value=True,
